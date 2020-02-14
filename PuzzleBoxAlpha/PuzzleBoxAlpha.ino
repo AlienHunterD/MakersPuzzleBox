@@ -96,9 +96,11 @@ void Reset()
     }
     pixels.show();
     delay(250);
+    pixels.clear();
+    pixels.show();
+    delay(250);
   }
-  pixels.clear();
-  pixels.show();
+  
 }
 
 void loop() 
@@ -117,6 +119,10 @@ void loop()
     case Playing:
       UpdatePlay();
       break;
+
+    case Won:
+      UpdateWon();
+      break; 
   }
 }
 
@@ -191,16 +197,24 @@ void ScoreThePuzzle()
       return;
     }
   }
-  while(true)
+
+  currentState = Won;
+}
+
+void UpdateWon()
+{
+  if(digitalRead(BUTTON_PIN) == LOW)
   {
-    pixels.clear();
-    delay(500);
-    for(int i = 0; i<NUMPIXELS; i++)
-    {
-      pixels.setPixelColor(i, pixels.Color(150, 0, 150));
-    }
-   
-    pixels.show();
-    delay(500);
+    currentState = Starting;
+    return;
   }
+  pixels.clear();
+  delay(500);
+  pixels.show();
+  for(int i = 0; i<NUMPIXELS; i++)
+  {
+    pixels.setPixelColor(i, pixels.Color(150, 0, 150));
+  }
+  pixels.show();
+  delay(500);
 }
