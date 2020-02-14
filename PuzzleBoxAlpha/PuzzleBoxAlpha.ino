@@ -14,9 +14,11 @@
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define LED_PIN 1
+#define RING_PIN 11
 #define BUTTON_PIN 10
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS 8 // To represent one word length
+#define RINGPIXELS 12
 // Where does the ribbon connected to the switches start?
 #define SWITCH_PIN_START 2
 
@@ -24,6 +26,7 @@ enum PuzzleBoxState {Starting, Playing, Won, Lost, Waiting};
 
 // Setting up the library with 8 pixels in a strip
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel ring(RINGPIXELS, RING_PIN, NEO_GRB + NEO_KHZ800);
 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 int puzzleLevel = 0; 
@@ -33,7 +36,6 @@ bool bias[] = {false, false, false, false, false, false, false, false}; // Inclu
 bool current[] = {false, false, false, false, false, false, false, false}; // Current light state
 
 PuzzleBoxState currentState = Waiting; // Start in the waiting state prior to play.
-
 
 // Read noise from the analog channels to seed the random number generator
 void SeedRNG()
@@ -72,6 +74,7 @@ void setup()
   SeedRNG();
 
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  ring.begin();
 
   // Set the intial pin modes
   for(int pin = SWITCH_PIN_START; pin < SWITCH_PIN_START+NUMPIXELS; pin++)
@@ -147,6 +150,7 @@ void ChangeState(PuzzleBoxState newState)
 void UpdateWaiting()
 {
   pixels.clear(); // Set all pixel colors to 'off'
+  ring.clear();  // Set all pixels in the ring to 'off'
   int pin = 0;
   int red = 0, green = 0, blue = 0; 
   for(int led = 0; led < NUMPIXELS; led++)
@@ -156,7 +160,13 @@ void UpdateWaiting()
     blue = random(0,255);
     pixels.setPixelColor(led, pixels.Color(red, green, blue));
   }
+
+  for(int led = 0; led < RINGPIXELS; led++)
+  {
+    ring.setPixelColor(led, pixels.Color(0, 0, 150));
+  }
   
+  ring.show(); // Update the ring of pixels;
   pixels.show();   // Send the updated pixel colors to the hardware.
 
   if(digitalRead(BUTTON_PIN) == LOW)
