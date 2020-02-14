@@ -20,7 +20,7 @@
 // Where does the ribbon connected to the switches start?
 #define SWITCH_PIN_START 2
 
-enum PuzzleState {Starting, Playing, Won, Lost, Waiting};
+enum PuzzleBoxState {Starting, Playing, Won, Lost, Waiting};
 
 // Setting up the library with 8 pixels in a strip
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -29,9 +29,10 @@ Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 int puzzleLevel = 0; 
 int lightArray[]={0,1,2,3,4,5,6,7}; // Array that holds the index number of the lights
 bool goal[] = {true, false, false, true, true, false, false, true}; // Goal value for the light puzzle
+bool bias[] = {false, false, false, false, false, false, false, false}; // Include Bias in the light state
 bool current[] = {false, false, false, false, false, false, false, false}; // Current light state
 
-PuzzleState currentState = Waiting; // Start in the waiting state prior to play.
+PuzzleBoxState currentState = Waiting; // Start in the waiting state prior to play.
 
 
 // Read noise from the analog channels to seed the random number generator
@@ -86,7 +87,7 @@ void setup()
 void Reset()
 {
   puzzleLevel = 0;
-  PuzzleState currentState = Waiting; // Move to the waiting state
+  ChangeState(Waiting); // Move to the waiting state
   for(int i = 0; i < 3; i++) // Blink three times
   {
     pixels.clear(); // Set all pixel colors to 'off'
@@ -112,8 +113,7 @@ void loop()
       break;
 
     case Starting:
-      Shuffle();
-      currentState = Playing;
+      ChangeState(Playing);
       break;
 
     case Playing:
@@ -124,6 +124,24 @@ void loop()
       UpdateWon();
       break; 
   }
+}
+
+// Handle all the transitions needed to change to a new state
+void ChangeState(PuzzleBoxState newState)
+{
+  currentState = newState;
+  switch(newState)
+  {
+    case Playing:
+      Shuffle();
+      // Handle the transition into the playing state
+      break;
+
+    case Waiting:
+      // Get ready to wait some
+      break;
+  }
+  
 }
 
 void UpdateWaiting()
@@ -143,7 +161,7 @@ void UpdateWaiting()
 
   if(digitalRead(BUTTON_PIN) == LOW)
   {
-    currentState = Starting;
+    ChangeState(Starting);
     return;
   }
   
@@ -169,7 +187,10 @@ void UpdatePlay()
   
   pixels.show();   // Send the updated pixel colors to the hardware.
 
-  ScoreThePuzzle();
+  if(ReachedTheGoal())
+  {
+    ChangeState(Won);
+  }
   
   delay(100);
 }
@@ -188,33 +209,33 @@ void SetLightValue(int light, bool value)
   }
 }
 
-void ScoreThePuzzle()
+bool ReachedTheGoal()
 {
   for(int i=0; i < NUMPIXELS; i++)
   {
     if(current[i] != goal[i])
     {
-      return;
+      return false;
     }
   }
-
-  currentState = Won;
+  return true;
 }
 
 void UpdateWon()
 {
   if(digitalRead(BUTTON_PIN) == LOW)
   {
-    currentState = Starting;
+    ChangeState(Starting);
     return;
   }
   pixels.clear();
-  delay(500);
   pixels.show();
+  delay(250);
+  
   for(int i = 0; i<NUMPIXELS; i++)
   {
     pixels.setPixelColor(i, pixels.Color(150, 0, 150));
   }
   pixels.show();
-  delay(500);
+  delay(250);
 }
