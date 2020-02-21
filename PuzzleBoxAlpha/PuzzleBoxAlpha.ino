@@ -32,7 +32,7 @@ Adafruit_NeoPixel ring(RINGPIXELS, RING_PIN, NEO_GRB + NEO_KHZ800);
 int puzzleLevel = 0; 
 int lightArray[]={0,1,2,3,4,5,6,7}; // Array that holds the index number of the lights
 bool goal[] = {true, false, false, true, true, false, false, true}; // Goal value for the light puzzle
-bool bias[] = {false, false, false, false, false, false, false, false}; // Include Bias in the light state
+int bias[] = {LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW}; // Include Bias in the light state
 bool current[] = {false, false, false, false, false, false, false, false}; // Current light state
 
 PuzzleBoxState currentState = Waiting; // Start in the waiting state prior to play.
@@ -65,6 +65,18 @@ void Shuffle()
       pixels.show();
       delay(50);
     }
+  }
+}
+void ReadSwitches()
+{
+  for (int i = 0; i < NUMPIXELS; i++)
+  {
+    if (digitalRead(i + SWITCH_PIN_START) == HIGH)
+    {
+        bias[i] = LOW;
+    }
+    else
+      bias[i] = HIGH;  
   }
 }
 
@@ -137,6 +149,7 @@ void ChangeState(PuzzleBoxState newState)
   {
     case Playing:
       Shuffle();
+      ReadSwitches();
       // Handle the transition into the playing state
       break;
 
@@ -182,16 +195,16 @@ void UpdatePlay()
 {
   pixels.clear(); // Set all pixel colors to 'off'
   int pin = 0;
-  for(int led = 0; led < NUMPIXELS; led++)
+  for(int toggle = 0; toggle < NUMPIXELS; toggle++)
   {
-    pin = led + SWITCH_PIN_START; 
-    if (digitalRead(pin) == LOW) 
+    pin = toggle + SWITCH_PIN_START; 
+    if (digitalRead(pin) == bias[toggle]) 
     {
-      SetLightValue(lightArray[led], true);  
+      SetLightValue(lightArray[toggle], true);  
     }
     else
     {
-      SetLightValue(lightArray[led], false);
+      SetLightValue(lightArray[toggle], false);
     }
   }
   
