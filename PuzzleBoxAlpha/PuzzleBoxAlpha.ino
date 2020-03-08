@@ -13,8 +13,8 @@
 #include <Adafruit_NeoPixel.h>
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define LED_PIN 1
-#define RING_PIN 11
+#define LED_PIN 11
+#define RING_PIN 12
 #define BUTTON_PIN 10
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS 8 // To represent one word length
@@ -26,7 +26,7 @@ enum PuzzleBoxState {Starting, Playing, Won, Lost, Waiting};
 
 // Setting up the library with 8 pixels in a strip
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel ring(RINGPIXELS, RING_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel ring(RINGPIXELS, RING_PIN, NEO_GRBW + NEO_KHZ800);
 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 int puzzleLevel = 0; 
