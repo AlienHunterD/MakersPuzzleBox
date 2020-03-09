@@ -1,5 +1,5 @@
 /********************************************************************************
- * IEEE UH-Makers Puzzle Box Alpha Mk 1 v 0.1
+ * IEEE UH-Makers Puzzle Box Alpha Mk 1 v 0.2
  * Alex Bradshaw azbradshaw@uh.edu
  * Dan Biediger debiediger@uh.edu
  * Spring 2020
@@ -15,10 +15,12 @@
 // Which pin on the Arduino is connected to the NeoPixels?
 #define LED_PIN 11
 #define RING_PIN 12
+#define JEWL_PIN 13
 #define BUTTON_PIN 10
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS 8 // To represent one word length
 #define RINGPIXELS 12
+#define JEWLPIXELS 7
 // Where does the ribbon connected to the switches start?
 #define SWITCH_PIN_START 2
 
@@ -27,6 +29,7 @@ enum PuzzleBoxState {Starting, Playing, Won, Lost, Waiting};
 // Setting up the library with 8 pixels in a strip
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel ring(RINGPIXELS, RING_PIN, NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel jewl(JEWLPIXELS, JEWL_PIN, NEO_GRB + NEO_KHZ800);
 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 int puzzleLevel = 0; 
@@ -49,8 +52,18 @@ void SeedRNG()
 void Shuffle()
 {
   // Shuffle the contents of the light array to confuse the mapping of the switches to lights
-  for(int repeat=0; repeat<6; repeat++)  
-  {
+  ring.clear();
+  
+  for(int repeat=0; repeat < RINGPIXELS; repeat++)  
+  { 
+    ring.setPixelColor(repeat, ring.Color(0, 0, 150)); // Make loading ring
+    ring.show();
+    
+    for (int led = 0; led < JEWLPIXELS; led++)
+    {
+      jewl.setPixelColor(led, jewl.Color(150, 0, 0)); // Turn jewl red
+    } 
+    jewl.show();
     for (int i=0; i < NUMPIXELS; i++) 
     {
       pixels.clear();
@@ -63,9 +76,14 @@ void Shuffle()
       pixels.setPixelColor(lightArray[i], pixels.Color(0, 0, 150)); 
       pixels.setPixelColor(lightArray[n], pixels.Color(0, 0, 150)); 
       pixels.show();
-      delay(50);
+      delay(15);
     }
   }
+  for (int led = 0; led < JEWLPIXELS; led++)
+    {
+      jewl.setPixelColor(led, jewl.Color(0, 0, 150)); // Turn jewl blue
+    } 
+  jewl.show();
 }
 void ReadSwitches()
 {
@@ -87,7 +105,8 @@ void setup()
 
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
   ring.begin();
-
+  jewl.begin();
+  
   // Set the intial pin modes
   for(int pin = SWITCH_PIN_START; pin < SWITCH_PIN_START+NUMPIXELS; pin++)
   {
@@ -106,6 +125,12 @@ void Reset()
   for(int i = 0; i < 3; i++) // Blink three times
   {
     pixels.clear(); // Set all pixel colors to 'off'
+    ring.clear();
+    jewl.clear();
+    pixels.show();
+    ring.show();
+    jewl.show();
+    
     for(int led = 0; led < NUMPIXELS; led++)
     {
       pixels.setPixelColor(led, pixels.Color(100, 100, 0));
@@ -164,24 +189,31 @@ void UpdateWaiting()
 {
   pixels.clear(); // Set all pixel colors to 'off'
   ring.clear();  // Set all pixels in the ring to 'off'
+
+  ring.setBrightness(75); // Turn down the brightness
+  jewl.setBrightness(75); 
   int pin = 0;
   int red = 0, green = 0, blue = 0; 
-  for(int led = 0; led < NUMPIXELS; led++)
-  {
-    red = random(0,255);
-    green = random(0,255);
-    blue = random(0,255);
-    pixels.setPixelColor(led, pixels.Color(red, green, blue));
-  }
-
-  for(int led = 0; led < RINGPIXELS; led++)
-  {
-    ring.setPixelColor(led, pixels.Color(0, 0, 150));
+  int pled;
+  int jled;
+  for(int rled = 0; rled < RINGPIXELS; rled++)
+  { 
+    pled = rled % NUMPIXELS;
+    jled = rled % JEWLPIXELS;
+    
+    red = random(0,150);
+    green = random(0,150);
+    blue = random(0,150);
+    
+    pixels.setPixelColor(pled, pixels.Color(red, green, blue));
+    ring.setPixelColor(rled, pixels.Color(red, green, blue));
+    jewl.setPixelColor(jled, pixels.Color(red, green, blue));
   }
   
   ring.show(); // Update the ring of pixels;
   pixels.show();   // Send the updated pixel colors to the hardware.
-
+  jewl.show();
+  
   if(digitalRead(BUTTON_PIN) == LOW)
   {
     ChangeState(Starting);
