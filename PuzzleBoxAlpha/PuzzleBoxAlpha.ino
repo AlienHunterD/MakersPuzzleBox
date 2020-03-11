@@ -26,7 +26,7 @@
 
 enum PuzzleBoxState {Starting, Playing, Won, Lost, Waiting};
 
-// Setting up the library with 8 pixels in a strip
+// Setting up the library for the different neopixel arrays
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel ring(RINGPIXELS, RING_PIN, NEO_GRBW + NEO_KHZ800);
 Adafruit_NeoPixel jewl(JEWLPIXELS, JEWL_PIN, NEO_GRB + NEO_KHZ800);
@@ -34,18 +34,18 @@ Adafruit_NeoPixel jewl(JEWLPIXELS, JEWL_PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 int puzzleLevel = 0; 
 int lightArray[]={0,1,2,3,4,5,6,7}; // Array that holds the index number of the lights
-bool goal[] = {true, false, false, true, true, false, false, true}; // Goal value for the light puzzle
+bool goal[] = {true, true, true, true, true, true, true, true}; // Initialize goal value for the light puzzle
 int bias[] = {LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW}; // Include Bias in the light state
-bool current[] = {false, false, false, false, false, false, false, false}; // Current light state
+bool current[] = {false, false, false, false, false, false, false, false}; // Initialize starting light state
 
 PuzzleBoxState currentState = Waiting; // Start in the waiting state prior to play.
 
-// Read noise from the analog channels to seed the random number generator
 void SeedRNG()
 {
+  // Read noise from the analog channels to seed the random number generator
   int r = 0;
-  for( int i=A0; i<=A3; i++)
-    r += analogRead( i);
+  for(int i=A0; i<=A3; i++)
+    r += analogRead(i);
   randomSeed(r);
 }
 
@@ -53,17 +53,15 @@ void Shuffle()
 {
   // Shuffle the contents of the light array to confuse the mapping of the switches to lights
   ring.clear();
+
+  SetAllPixels(jewl, JEWLPIXELS, 150, 0, 0); // Turn jewl red
+  jewl.show();
   
   for(int repeat=0; repeat < RINGPIXELS; repeat++)  
   { 
     ring.setPixelColor(repeat, ring.Color(0, 0, 150)); // Make loading ring
     ring.show();
     
-    for (int led = 0; led < JEWLPIXELS; led++)
-    {
-      jewl.setPixelColor(led, jewl.Color(150, 0, 0)); // Turn jewl red
-    } 
-    jewl.show();
     for (int i=0; i < NUMPIXELS; i++) 
     {
       pixels.clear();
@@ -79,14 +77,13 @@ void Shuffle()
       delay(15);
     }
   }
-  for (int led = 0; led < JEWLPIXELS; led++)
-    {
-      jewl.setPixelColor(led, jewl.Color(0, 0, 150)); // Turn jewl blue
-    } 
+  SetAllPixels(jewl, JEWLPIXELS, 0, 0, 150); // Turn jewl blue
   jewl.show();
 }
+
 void ReadSwitches()
 {
+  // Check starting state of switches to set bias so all switches begin in state "false"
   for (int i = 0; i < NUMPIXELS; i++)
   {
     if (digitalRead(i + SWITCH_PIN_START) == HIGH)
@@ -100,10 +97,11 @@ void ReadSwitches()
 
 void setup() 
 {
-  // Randomize the RNG so we get actual random numbers
-  SeedRNG();
+  
+  SeedRNG(); // Randomize the RNG so we get actual random numbers
 
-  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  // INITIALIZE NeoPixel strip objects (REQUIRED)
+  pixels.begin(); 
   ring.begin();
   jewl.begin();
   
@@ -113,32 +111,51 @@ void setup()
     pinMode(pin, INPUT_PULLUP); // All pins in pull up mode
   }
 
-   pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   Reset();
 }
 
-void Reset()
+void SetAllPixels(Adafruit_NeoPixel &strip, int numPix, int r, int g, int b)
 {
-  puzzleLevel = 0;
+  // Function to easily set all pixels in a strip to one color
+  for(int led = 0; led < numPix; led++)
+    {
+      strip.setPixelColor(led, strip.Color(r, g, b));
+    }  
+  return;
+}
+
+void Reset()
+{ 
+  // Turn off all leds and perform "boot up" light display to test neopixels
+  puzzleLevel = 0; // Initialize puzzleLevel to first level (0)
   ChangeState(Waiting); // Move to the waiting state
   for(int i = 0; i < 3; i++) // Blink three times
   {
-    pixels.clear(); // Set all pixel colors to 'off'
+    // Set all pixel colors to 'off'
+    pixels.clear(); 
     ring.clear();
     jewl.clear();
     pixels.show();
     ring.show();
     jewl.show();
+
+    // Just blink yellow for now
+    SetAllPixels(pixels, NUMPIXELS, 100, 100, 0);
+    SetAllPixels(ring, RINGPIXELS, 100, 100, 0);
+    SetAllPixels(jewl, JEWLPIXELS, 100, 100, 0);
     
-    for(int led = 0; led < NUMPIXELS; led++)
-    {
-      pixels.setPixelColor(led, pixels.Color(100, 100, 0));
-    }
     pixels.show();
+    ring.show();
+    jewl.show();
     delay(250);
     pixels.clear();
+    ring.clear();
+    jewl.clear();
     pixels.show();
+    ring.show();
+    jewl.show();
     delay(250);
   }
   
@@ -146,9 +163,11 @@ void Reset()
 
 void loop() 
 {
+  // Main game state loop
   switch(currentState)
   {
     case Waiting:
+      // State between games
       UpdateWaiting();
       break;
 
@@ -166,16 +185,17 @@ void loop()
   }
 }
 
-// Handle all the transitions needed to change to a new state
+
 void ChangeState(PuzzleBoxState newState)
 {
+  // Handle all the transitions needed to change to a new state
   currentState = newState;
   switch(newState)
   {
     case Playing:
+      // Handle the transition into the playing state
       Shuffle();
       ReadSwitches();
-      // Handle the transition into the playing state
       break;
 
     case Waiting:
@@ -198,33 +218,40 @@ void UpdateWaiting()
   int jled;
   for(int rled = 0; rled < RINGPIXELS; rled++)
   { 
-    pled = rled % NUMPIXELS;
+    // Flash random colors on all pixels while waiting
+    // Since the light arrays are of differing lenghts, use remainder of index to avoid three for loops
+    pled = rled % NUMPIXELS; 
     jled = rled % JEWLPIXELS;
-    
+
+    // Pick random colors for current pixel
     red = random(0,150);
     green = random(0,150);
     blue = random(0,150);
-    
+
+    // Set all of the pixel colors
     pixels.setPixelColor(pled, pixels.Color(red, green, blue));
     ring.setPixelColor(rled, pixels.Color(red, green, blue));
     jewl.setPixelColor(jled, pixels.Color(red, green, blue));
   }
   
-  ring.show(); // Update the ring of pixels;
-  pixels.show();   // Send the updated pixel colors to the hardware.
+  ring.show(); 
+  pixels.show();  
   jewl.show();
-  
+
+  // Check if button is pressed
   if(digitalRead(BUTTON_PIN) == LOW)
   {
+    // If pressed, start the game
     ChangeState(Starting);
     return;
   }
-  
+  // Time between random pixel color changes 
   delay(100);
 }
 
 void UpdatePlay()
-{
+{ 
+  // While playing, change lights who's corresponding switches have been switched and check for win
   pixels.clear(); // Set all pixel colors to 'off'
   int pin = 0;
   for(int toggle = 0; toggle < NUMPIXELS; toggle++)
@@ -252,6 +279,7 @@ void UpdatePlay()
 
 void SetLightValue(int light, bool value)
 {
+  // Used to change lights from their "true" and "false" states.
   if(value)
   {
     pixels.setPixelColor(light, pixels.Color(0, 150, 0));
@@ -266,6 +294,7 @@ void SetLightValue(int light, bool value)
 
 bool ReachedTheGoal()
 {
+  // Check if current state of lights match the goal state
   for(int i=0; i < NUMPIXELS; i++)
   {
     if(current[i] != goal[i])
@@ -278,6 +307,7 @@ bool ReachedTheGoal()
 
 void UpdateWon()
 {
+  // Flash purple until button is pressed
   if(digitalRead(BUTTON_PIN) == LOW)
   {
     ChangeState(Starting);
@@ -287,10 +317,7 @@ void UpdateWon()
   pixels.show();
   delay(250);
   
-  for(int i = 0; i<NUMPIXELS; i++)
-  {
-    pixels.setPixelColor(i, pixels.Color(150, 0, 150));
-  }
+  SetAllPixels(pixels, NUMPIXELS, 150, 0, 150);
   pixels.show();
   delay(250);
 }
