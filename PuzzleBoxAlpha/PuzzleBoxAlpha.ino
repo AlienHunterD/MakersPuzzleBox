@@ -11,6 +11,7 @@
  ********************************************************************************/
 
 #include <Adafruit_NeoPixel.h>
+#include "Numbers.h";
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define LED_PIN 11
@@ -72,11 +73,14 @@ void SetControls()
         lightArray[i] = i;
 
       // First level "shuffle" animation
-      for (int i = 0; i < NUMPIXELS; i++){
-        pixels.setBrightness(i * 14);
+      for (int i = 0; i < NUMPIXELS * 2; i++){
+        pixels.setBrightness(i * 7);
+        ring.setBrightness(i * 7);
+        SetAllPixels(ring, RINGPIXELS, 0, 0, 150);
         SetAllPixels(pixels, NUMPIXELS, 0, 0, 150);
         pixels.show();
-        delay(120);
+        ring.show();
+        delay(60);
       }
       break;
 
@@ -153,6 +157,27 @@ void SetAllPixels(Adafruit_NeoPixel &strip, int numPix, int r, int g, int b)
       strip.setPixelColor(led, strip.Color(r, g, b));
     }  
   return;
+}
+
+
+void DisplayNum(bool num[])
+{
+  for (int i = 0; i < RINGPIXELS; i++)
+  {
+    if (num[i])
+      ring.setPixelColor(i, ring.Color(0, 150, 0));
+    else
+      ring.setPixelColor(i, ring.Color(10, 0, 0));  
+  }
+  for (int i = 0; i < JEWLPIXELS; i++)
+  {
+    if (num[i + 12])
+      jewl.setPixelColor(i, jewl.Color(0, 150, 0));
+    else
+      jewl.setPixelColor(i, jewl.Color(10, 0, 0));  
+  }
+  ring.show();
+  jewl.show();
 }
 
 
@@ -397,6 +422,8 @@ void DisplayHint()
       SetAllPixels(ring, RINGPIXELS, 0, 150, 0);
       ring.show();
       jewl.show();
+      delay(750);
+      
       break;
 
     case FlashOrder:
@@ -414,11 +441,13 @@ void DisplayHint()
         }
         jewl.show();
         ring.show();
+        UpdatePixelState(); // So that there is not a long time where the state of the pixels does not match the state of the switches
         delay(400);
         jewl.clear();
         ring.clear();
         jewl.show();
         ring.show();
+        UpdatePixelState();
         delay(250);
       }
       break;
