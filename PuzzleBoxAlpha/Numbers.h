@@ -12,6 +12,6 @@ bool THREE[] {true, true, false, false, false, true, true, true, false, false, f
 bool FOUR[] {false, true, false, false, false, true, false, false, false, false, false, true, true, false, true, true, false, false, true};
 bool FIVE[] {true, true, false, false, false, true, true, true, false, false, false, true, true, false, false, true, false, false, true};
 bool SIX[] {true, true, false, false, false, true, true, true, false, false, false, true, true, false, false, true, false, true, true};
-bool SEVEN[] {true, true, true, false, false, false, true, false, false, false, false, true, true, false, true, false, true, false, false}; //This one is ugly
+bool SEVEN[] {true, true, false, false, false, true, false, false, false, false, false, true, false, false, true, true, false, false, false}; //This one is ugly
 bool EIGHT[] {true, true, false, false, false, true, true, true, false, false, false, true, true, false, true, true, false, true, true};
 bool NINE[] {true, true, false, false, false, true, false, false, false, false, false, true, true, false, true, true, false, false, true};

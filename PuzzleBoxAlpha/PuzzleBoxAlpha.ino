@@ -25,12 +25,14 @@
 // Where does the ribbon connected to the switches start?
 #define SWITCH_PIN_START 2
 
-enum PuzzleBoxState {Starting, Playing, Won, Lost, Waiting};
-enum HintType {Solid, FlashOrder, DisplayNumber};
-enum ControlsType {Simple, Random, SimpleAdjacent, RandomAdjacent};
-enum GoalType {SolidG, RandomG, Bianary};
 
-// Setting up the library for the different neopixel arrays
+enum PuzzleBoxState {Starting, Playing, Won, Lost, Waiting}; // Main state of puzzle box
+// Three factors that go into determining level difficulty
+enum HintType {Solid, FlashOrder, DisplayNumber}; // What happens when the button is pressed during the game
+enum ControlsType {Simple, Random, SimpleAdjacent, RandomAdjacent}; // How the switches interact with the lights
+enum GoalType {SolidG, RandomG, Bianary}; 
+
+// Setting up the libraries for the different neopixel arrays
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel ring(RINGPIXELS, RING_PIN, NEO_GRBW + NEO_KHZ800);
 Adafruit_NeoPixel jewl(JEWLPIXELS, JEWL_PIN, NEO_GRB + NEO_KHZ800);
@@ -106,7 +108,18 @@ void SetControls()
           delay(15);
         }
       }
+      break;
+
+    // This might not be the way to go about this...
+    case SimpleAdjacent:
+      // Set light array back to normal and make the switches toggle adjacent switches
+      break;
+
+    case RandomAdjacent:
+      // Shuffle the contents of the light array and make the switches toggle adjacent switches
+      break;
   }
+  
   SetAllPixels(jewl, JEWLPIXELS, 0, 0, 150); // Turn jewl blue
   jewl.show();
 }
@@ -114,7 +127,7 @@ void SetControls()
 
 void ReadSwitches()
 {
-  // Check starting state of switches to set bias so all switches begin in state "false"
+  // Check starting state of switches to set bias so all switches begin in "false" state
   for (int i = 0; i < NUMPIXELS; i++)
   {
     if (digitalRead(i + SWITCH_PIN_START) == HIGH)
@@ -162,6 +175,9 @@ void SetAllPixels(Adafruit_NeoPixel &strip, int numPix, int r, int g, int b)
 
 void DisplayNum(bool num[])
 {
+  // Uses number variables in "Numbers.h" file to display number on circular display
+  
+  // Set ring lights
   for (int i = 0; i < RINGPIXELS; i++)
   {
     if (num[i])
@@ -169,6 +185,7 @@ void DisplayNum(bool num[])
     else
       ring.setPixelColor(i, ring.Color(10, 0, 0));  
   }
+  // Set jewl lights
   for (int i = 0; i < JEWLPIXELS; i++)
   {
     if (num[i + 12])
@@ -176,6 +193,7 @@ void DisplayNum(bool num[])
     else
       jewl.setPixelColor(i, jewl.Color(10, 0, 0));  
   }
+  
   ring.show();
   jewl.show();
 }
@@ -271,8 +289,9 @@ void UpdateWaiting()
   ring.show(); 
   pixels.show();  
   jewl.show();
-  
-  ring.setBrightness(75); // Turn down the brightness
+
+  // Turn down the brightness
+  ring.setBrightness(75); 
   jewl.setBrightness(75); 
   
   int pin = 0;
@@ -315,14 +334,15 @@ void UpdateWaiting()
 
 void SetGoal()
 {
-
+  // Using the currentGoal variable, set the goal state of the lights
   switch (currentGoal)
   {
     case SolidG:
+      // All on
       for (int i = 0; i < NUMPIXELS; i++)
         goal[i] = true;
       break;
-      
+
     case RandomG:
       // Randomize the goal array
       int value;
@@ -415,18 +435,20 @@ void SetupLevel()
 
 void DisplayHint()
 {
+  // When button is pressed, display hint on circular display depending on currentHint variable
   switch (currentHint)
   {
     case Solid:
+      // Just turn display green
       SetAllPixels(jewl, JEWLPIXELS, 0, 150, 0);
       SetAllPixels(ring, RINGPIXELS, 0, 150, 0);
       ring.show();
       jewl.show();
       delay(750);
-      
       break;
 
     case FlashOrder:
+      // Flash the goal on the circular display
       for (int i=0; i < NUMPIXELS; i++)
       {
         if (goal[i])
@@ -447,17 +469,18 @@ void DisplayHint()
         ring.clear();
         jewl.show();
         ring.show();
-        UpdatePixelState();
+        UpdatePixelState(); //^^
         delay(250);
       }
       break;
       
     case DisplayNumber:
-      // Need to develop number displays first.
+      // Fix Me
       break;
   }
 
   delay(250);
+  // Set display back to blue
   SetAllPixels(jewl, JEWLPIXELS, 0, 0, 150);
   SetAllPixels(ring, RINGPIXELS, 0, 0, 150);
   jewl.show();
@@ -500,6 +523,7 @@ void UpdatePlay()
     puzzleLevel++;
   }
 
+  // If the button is pressed during play, display hint
   if(digitalRead(BUTTON_PIN) == LOW)
   {
     DisplayHint();
