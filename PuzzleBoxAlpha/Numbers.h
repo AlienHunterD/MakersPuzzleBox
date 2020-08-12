@@ -1,9 +1,10 @@
-// Contains all of the number shapes for led display to be used with DisplayNumber function
+// Contains all of the Character shapes for led display to be used with DisplayChar function
 
 
 // Reference: {[0 1 2 3 4 5 6 7 8 9 10 11] [0 1 2 3 4 5 6]}
 //              Ring leds ^^^              Jewl leds^^^ 
 
+bool* NUMS[10];
 
 bool ZERO[] {true, true, false, false, false, true, true, true, false, false, false, true, false, false, true, true, false, true, true};
 bool ONE[] {true, false, false, false, false, true, true, true, false, false, false, true, true, true, false, false, true, false, false};
@@ -15,3 +16,6 @@ bool SIX[] {true, true, false, false, false, true, true, true, false, false, fal
 bool SEVEN[] {true, true, false, false, false, true, false, false, false, false, false, true, false, false, true, true, false, false, false};
 bool EIGHT[] {true, true, false, false, false, true, true, true, false, false, false, true, true, false, true, true, false, true, true};
 bool NINE[] {true, true, false, false, false, true, false, false, false, false, false, true, true, false, true, true, false, false, true};
+
+bool I[] {true, true, false, false, false, true, true, true, false, false, false, true, true, true, false, false, true, false, false};
+bool E[] {true, true, false, false, false, true, true, true, false, false, false, true, true, false, false, false, false, true, true};
