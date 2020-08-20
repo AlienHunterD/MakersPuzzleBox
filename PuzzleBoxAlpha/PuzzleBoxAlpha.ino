@@ -347,9 +347,6 @@ void SetupLevel()
   switch (puzzleLevel)
   {
     case 0:
-//    currentHint = FlashOrder;
-//    currentControls = SimpleAdjacent;
-//    currentGoal = RandomG;
     currentHint = Solid;
     currentControls = Simple;
     currentGoal = SolidG;
@@ -366,29 +363,29 @@ void SetupLevel()
     currentControls = Random;
     currentGoal = RandomG;
     break;
-
+    
     case 3:
+    currentHint = DisplayNumber;
+    currentControls = Simple;
+    currentGoal = Binary;
+    break;
+    
+    case 4:
+    currentHint = DisplayNumber;
+    currentControls = Random;
+    currentGoal = Binary;
+    break;
+
+    case 5:
     currentHint = FlashOrder;
     currentControls = SimpleAdjacent;
     currentGoal = RandomG;
     break;
 
-    case 4:
+    case 6:
     currentHint = FlashOrder;
     currentControls = RandomAdjacent;
     currentGoal = RandomG;
-    break;
-
-    case 5:
-    currentHint = DisplayNumber;
-    currentControls = Simple;
-    currentGoal = Binary;
-    break;
-
-    case 6:
-    currentHint = DisplayNumber;
-    currentControls = Random;
-    currentGoal = Binary;
     break;
 
     case 7:
@@ -626,18 +623,51 @@ void UpdatePixelState()
   // Update pixels based on current switch state and control type
   strip.clear(); // Set all pixel colors to 'off'
   int pin = 0;
+  // Read Switches
   for(int toggle = 0; toggle < STRIP_LENGTH; toggle++)
   {
     pin = toggle + SWITCH_PIN_START; 
     if (digitalRead(pin) == bias[toggle]) 
     {
-      SetLightValue(lightArray[toggle], true);
+      switchStates[toggle] = true;
     }
     else
     {
-      SetLightValue(lightArray[toggle], false);
+      switchStates[toggle] = false;
+    }
+    SetLightValue(lightArray[toggle], switchStates[toggle]); // Update Light Array
+  }
+
+  // If in adjacent control mode
+  if ((currentControls == SimpleAdjacent || currentControls == RandomAdjacent))
+  {
+    for(int toggle = 0; toggle < STRIP_LENGTH; toggle++)
+    {
+      // If either previous or next switch is on
+      if (switchStates[toggle + 1] ^ switchStates[toggle - 1])
+      {
+        SetLightValue(lightArray[toggle], !switchStates[toggle]); // Toggle light  
+      }
+    }
+    // End Cases
+    if (switchStates[0] ^ switchStates[6])
+    {
+      SetLightValue(lightArray[7], !switchStates[7]);
+    }
+    else
+    {
+      SetLightValue(lightArray[7], switchStates[7]);
+    }
+    if (switchStates[1] ^ switchStates[7])
+    {
+      SetLightValue(lightArray[0], !switchStates[0]);
+    }
+    else
+    {
+      SetLightValue(lightArray[0], switchStates[0]);
     }
   }
+
   
   strip.show();   // Send the updated pixel colors to the hardware.  
   return;
